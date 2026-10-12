@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VS - عداد النقاط</title>
+<style>
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Segoe UI', 'Arial Black', Tahoma, sans-serif;
+    user-select: none;
+    background: #000;
+  }
+
+  /* الحاوية الرئيسية */
+  .split-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    position: relative;
+  }
+
+  /* ====== الأقسام ====== */
+  .side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4vh 3vw;
+    cursor: pointer;
+    transition: filter 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .side:active {
+    filter: brightness(0.85);
+  }
+
+  /* اللون الأحمر */
+  .side.red {
+    background: radial-gradient(circle at 50% 50%, #a01020 0%, #6a0816 70%, #3d040c 100%);
+  }
+
+  /* اللون الأزرق */
+  .side.blue {
+    background: radial-gradient(circle at 50% 50%, #00b4f0 0%, #0088c0 70%, #004e70 100%);
+  }
+
+  /* تأثير وميض عند النقر */
+  .side::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 60%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+
+  .side.flash::after {
+    opacity: 1;
+    transition: opacity 0s;
+  }
+
+  /* ====== الاسم ====== */
+  .name-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-family: inherit;
+    font-weight: 900;
+    color: #000;
+    font-size: clamp(30px, 8vw, 75px);
+    letter-spacing: 3px;
+    padding: 5px;
+    text-shadow: 0 2px 0 rgba(255,255,255,0.15);
+    z-index: 2;
+    position: relative;
+  }
+
+  .name-input::placeholder {
+    color: rgba(0,0,0,0.35);
+  }
+
+  /* ====== حاوية الرقم مع البيضة ====== */
+  .score-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(130px, 32vw, 280px);
+    height: clamp(160px, 40vw, 350px);
+    margin-bottom: 4vh;
+    z-index: 2;
+  }
+
+  /* شكل البيضة */
+  .egg-shape {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0; left: 0;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
+  }
+
+  .egg-shape path {
+    fill: rgba(0,0,0,0.08);
+    stroke: #000;
+    stroke-width: 7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* الرقم */
+  .score-number {
+    position: relative;
+    z-index: 3;
+    font-weight: 900;
+    color: #000;
+    font-size: clamp(55px, 15vw, 145px);
+    line-height: 1;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-align: center;
+    text-shadow: 0 3px 0 rgba(255,255,255,0.15);
+  }
+
+  .score-number.bump {
+    transform: scale(1.35);
+  }
+
+  .score-number.bump-down {
+    transform: scale(0.7);
+  }
+
+  /* ====== كلمة VS ====== */
+  .vs-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .vs-text {
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    font-size: clamp(60px, 14vw, 180px);
+    font-weight: 900;
+    font-style: italic;
+    color: #fff;
+    letter-spacing: -3px;
+    text-shadow:
+      0 0 10px rgba(255,255,255,0.8),
+      0 0 25px rgba(255,255,255,0.5),
+      4px 4px 0 #000,
+      -4px -4px 0 #000,
+      4px -4px 0 #000,
+      -4px 4px 0 #000,
+      0 0 60px rgba(255,215,0,0.6);
+    animation: vsPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes vsPulse {
+    0%, 100% {
+      transform: scale(1) rotate(-3deg);
+      text-shadow:
+        0 0 10px rgba(255,255,255,0.8),
+        0 0 25px rgba(255,255,255,0.5),
+        4px 4px 0 #000,
+        -4px -4px 0 #000,
+        4px -4px 0 #000,
+        -4px 4px 0 #000,
+        0 0 60px rgba(255,215,0,0.6);
+    }
+    50% {
+      transform: scale(1.08) rotate(-3deg);
+      text-shadow:
+        0 0 20px rgba(255,255,255,1),
+        0 0 40px rgba(255,215,0,0.9),
+        4px 4px 0 #000,
+        -4px -4px 0 #000,
+        4px -4px 0 #000,
+        -4px 4px 0 #000,
+        0 0 90px rgba(255,215,0,1);
+    }
+  }
+
+  /* خط عمودي فاصل متوهج */
+  .divider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 4px;
+    transform: translateX(-50%);
+    background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(255,255,255,0.9) 20%,
+      #fff 50%,
+      rgba(255,255,255,0.9) 80%,
+      transparent 100%);
+    box-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,215,0,0.6);
+    z-index: 5;
+    pointer-events: none;
+    animation: dividerGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes dividerGlow {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  /* جزيئات عائمة في الخلفية */
+  .particles {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    animation: floatUp linear infinite;
+  }
+
+  @keyframes floatUp {
+    from {
+      transform: translateY(100vh) scale(0);
+      opacity: 0;
+    }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.8; }
+    to {
+      transform: translateY(-100px) scale(1.5);
+      opacity: 0;
+    }
+  }
+
+  /* انفجار النجوم عند النقر */
+  .spark {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 20;
+    animation: sparkFly 0.7s ease-out forwards;
+    box-shadow: 0 0 15px #fff, 0 0 25px #ffd700;
+  }
+
+  @keyframes sparkFly {
+    from {
+      transform: translate(0,0) scale(1);
+      opacity: 1;
+    }
+    to {
+      transform: translate(var(--dx), var(--dy)) scale(0);
+      opacity: 0;
+    }
+  }
+
+  /* اهتزاز البطاقة عند النقر */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  .side.shake {
+    animation: shake 0.25s;
+  }
+
+  /* الشاشات الصغيرة */
+  @media (max-width: 600px) {
+    .side {
+      padding: 3vh 2vw;
+    }
+  }
+
+  /* Landscape */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .side {
+      padding: 2vh 3vw;
+    }
+    .score-wrapper {
+      margin-bottom: 1vh;
+      height: clamp(110px, 45vh, 220px);
+      width: clamp(85px, 25vh, 170px);
+    }
+    .name-input {
+      font-size: clamp(24px, 5vw, 45px);
+    }
+    .score-number {
+      font-size: clamp(40px, 10vh, 90px);
+    }
+    .vs-text {
+      font-size: clamp(50px, 15vh, 130px);
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="split-container">
+
+  <!-- جزيئات الخلفية -->
+  <div class="particles" id="particles"></div>
+
+  <!-- الجهة الحمراء (اليسار) -->
+  <div class="side red" id="redSide">
+    <input type="text" class="name-input" id="redName" value="red" placeholder="اسم">
+    <div class="score-wrapper">
+      <svg class="egg-shape" viewBox="0 0 100 130" preserveAspectRatio="none">
+        <path d="M50,5 C20,5 8,45 8,75 C8,105 25,125 50,125 C75,125 92,105 92,75 C92,45 80,5 50,5 Z" />
+      </svg>
+      <div class="score-number" id="redScore">0</div>
+    </div>
+  </div>
+
+  <!-- الجهة الزرقاء (اليمين) -->
+  <div class="side blue" id="blueSide">
+    <input type="text" class="name-input" id="blueName" value="blue" placeholder="اسم">
+    <div class="score-wrapper">
+      <svg class="egg-shape" viewBox="0 0 100 130" preserveAspectRatio="none">
+        <path d="M50,5 C20,5 8,45 8,75 C8,105 25,125 50,125 C75,125 92,105 92,75 C92,45 80,5 50,5 Z" />
+      </svg>
+      <div class="score-number" id="blueScore">0</div>
+    </div>
+  </div>
+
+  <!-- الخط الفاصل -->
+  <div class="divider"></div>
+
+  <!-- كلمة VS -->
+  <div class="vs-badge">
+    <div class="vs-text">VS</div>
+  </div>
+
+</div>
+
+<script>
+  // ===== منع القائمة الافتراضية =====
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  // ===== إنشاء الجزيئات العائمة =====
+  const particlesContainer = document.getElementById('particles');
+  function createParticles() {
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (5 + Math.random() * 8) + 's';
+      p.style.animationDelay = (Math.random() * 8) + 's';
+      p.style.width = p.style.height = (3 + Math.random() * 6) + 'px';
+      p.style.opacity = 0.3 + Math.random() * 0.5;
+      particlesContainer.appendChild(p);
+    }
+  }
+  createParticles();
+
+  // ===== تأثير الشرر عند النقر =====
+  function createSparks(x, y) {
+    const colors = ['#fff', '#ffd700', '#ff6b6b', '#4ecdc4', '#ffe66d'];
+    for (let i = 0; i < 12; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'spark';
+      spark.style.left = x + 'px';
+      spark.style.top = y + 'px';
+      spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+      spark.style.boxShadow = `0 0 15px ${spark.style.background}, 0 0 25px #fff`;
+
+      const angle = (Math.PI * 2 * i) / 12 + Math.random() * 0.5;
+      const distance = 60 + Math.random() * 80;
+      spark.style.setProperty('--dx', Math.cos(angle) * distance + 'px');
+      spark.style.setProperty('--dy', Math.sin(angle) * distance + 'px');
+
+      document.body.appendChild(spark);
+      setTimeout(() => spark.remove(), 700);
+    }
+  }
+
+  // ===== تغيير النقاط =====
+  function changeScore(scoreEl, amount, cardEl, event) {
+    let current = parseInt(scoreEl.textContent) || 0;
+    let newValue = current + amount;
+    scoreEl.textContent = newValue;
+
+    // تأثير الحركة
+    if (amount > 0) {
+      scoreEl.classList.add('bump');
+      setTimeout(() => scoreEl.classList.remove('bump'), 180);
+    } else {
+      scoreEl.classList.add('bump-down');
+      setTimeout(() => scoreEl.classList.remove('bump-down'), 180);
+    }
+
+    // اهتزاز البطاقة
+    if (cardEl) {
+      cardEl.classList.add('shake');
+      setTimeout(() => cardEl.classList.remove('shake'), 250);
+      // وميض
+      cardEl.classList.add('flash');
+      setTimeout(() => cardEl.classList.remove('flash'), 50);
+    }
+
+    // شرر عند النقر
+    if (event) {
+      const x = event.clientX || (event.touches && event.touches[0].clientX);
+      const y = event.clientY || (event.touches && event.touches[0].clientY);
+      if (x && y) createSparks(x, y);
+    }
+  }
+
+  // ===== إعداد الضغط الطويل =====
+  function setupSide(sideEl, scoreEl) {
+    let timer = null;
+    let longPressed = false;
+    let touchHandled = false;
+    let lastEvent = null;
+
+    const start = (e) => {
+      longPressed = false;
+      lastEvent = e;
+      timer = setTimeout(() => {
+        longPressed = true;
+        changeScore(scoreEl, -1, sideEl, lastEvent);
+      }, 500);
+    };
+
+    const end = (e) => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      if (longPressed) {
+        e.preventDefault();
+        e.stopPropagation();
+      } else {
+        changeScore(scoreEl, 1, sideEl, e);
+      }
+    };
+
+    const cancel = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      longPressed = false;
+    };
+
+    // لمس (هاتف)
+    sideEl.addEventListener('touchstart', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      touchHandled = true;
+      start(e);
+    }, { passive: true });
+
+    sideEl.addEventListener('touchend', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      end(e);
+      setTimeout(() => touchHandled = false, 400);
+    });
+
+    sideEl.addEventListener('touchcancel', cancel);
+
+    // ماوس (كمبيوتر)
+    sideEl.addEventListener('mousedown', (e) => {
+      if (e.target.tagName === 'INPUT' || touchHandled) return;
+      start(e);
+    });
+
+    sideEl.addEventListener('mouseup', (e) => {
+      if (e.target.tagName === 'INPUT' || touchHandled) return;
+      end(e);
+    });
+
+    sideEl.addEventListener('mouseleave', cancel);
+  }
+
+  // تفعيل الجهتين
+  setupSide(document.getElementById('redSide'), document.getElementById('redScore'));
+  setupSide(document.getElementById('blueSide'), document.getElementById('blueScore'));
+
+  // ===== اختصارات لوحة المفاتيح للكمبيوتر =====
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+
+    const redScore = document.getElementById('redScore');
+    const blueScore = document.getElementById('blueScore');
+    const redSide = document.getElementById('redSide');
+    const blueSide = document.getElementById('blueSide');
+
+    switch(e.key.toLowerCase()) {
+      case 'a':
+        changeScore(redScore, 1, redSide, null);
+        break;
+      case 's':
+        changeScore(redScore, -1, redSide, null);
+        break;
+      case 'k':
+        changeScore(blueScore, 1, blueSide, null);
+        break;
+      case 'l':
+        changeScore(blueScore, -1, blueSide, null);
+        break;
+      case 'r':
+        if (confirm('هل تريد تصفير جميع النقاط؟')) {
+          redScore.textContent = '0';
+          blueScore.textContent = '0';
+        }
+        break;
+    }
+  });
+</script>
+
+</body>
+</html>
